@@ -35,3 +35,26 @@ ORDER BY 2, 3;
 
 
 
+-- Using CTE to perform Calculation on Partition By in previous query
+
+WITH PopvsVac (Continent, Location, Date, Population, New_Vaccinations, RollingPeopleVaccinated) AS
+(
+    SELECT 
+        dea.continent, 
+        dea.location, 
+        dea.date, 
+        dea.population, 
+        vac.new_vaccinations,
+        SUM(CAST(vac.new_vaccinations AS bigint)) 
+        OVER (PARTITION BY dea.Location ORDER BY dea.location, dea.Date) as RollingPeopleVaccinated
+    FROM PortfolioProject..CovidDeaths dea
+    JOIN PortfolioProject..CovidVaccinations vac
+        ON dea.location = vac.location
+        AND dea.date = vac.date
+    WHERE dea.continent IS NOT NULL
+)
+SELECT *, (RollingPeopleVaccinated * 100.0 / Population) AS VaccinationPercentage
+FROM PopvsVac;
+
+
+
